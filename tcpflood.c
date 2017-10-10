@@ -58,6 +58,7 @@ int main(int argc,char *argv[])
 
         if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) >= 0) {
             socks[i] = sockfd;
+            printf("%d: %d\n", i, sockfd);
         }else{
             warnning("ERROR connecting");
         }
