@@ -9,7 +9,7 @@ Linux下的用法：
 ```
 sysctl -w net.ipv4.tcp_mem='4096 4096 4096'
 sysctl -w net.ipv4.tcp_rmem='4096 4096 4096'
-sysctl -w net.ipv4.tcp_wmem='4096 4096 4096’
+sysctl -w net.ipv4.tcp_wmem='4096 4096 4096'
 ```
 
 2.设置客户端端口范围和超时时间
@@ -23,19 +23,29 @@ sysctl -w net.ipv4.tcp_fin_timeout=30
 
 ```
 
-for i in `seq 1 21`; 
+for i in `seq 10 20`; 
 do 
     echo ifconfig eth0:$i 10.0.0.$i up
     sudo ifconfig eth0:$i 10.0.0.$i up
 done
 ```
 
+> 网卡名和IP可以根据实际情况修改。
+
 4.设置打开文件个数的限制。
+
+修改：/etc/security/limits.conf
+
 ```
-ulimit -n 40960
-sysctl -w fs.file-max=102400
+* - nofile 1048576
 ```
 
+终端：
+
+```
+ulimit -n 1048576
+sysctl -w fs.file-max=1048576
+```
 
 5.运行测试
 

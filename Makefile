@@ -1,5 +1,5 @@
 all:
-	gcc -g httpflood.c -o httpflood
-	gcc -g tcpflood.c -o tcpflood
+	gcc -g connection_common.c http_connection.c -o http_connection
+	gcc -g http_request.c -o http_request
 clean:
-	rm -rf httpflood.dSYM tcpflood.dSYM httpflood tcpflood
+	rm -rf http_request http_connection

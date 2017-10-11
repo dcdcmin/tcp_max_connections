@@ -1,13 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h> 
-#include <unistd.h>
-#include <string.h>
-#include <netdb.h> 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include "connection_common.h"
 
 void error(const char *msg) {
     perror(msg); exit(0); 
@@ -17,24 +8,18 @@ void warnning(const char *msg) {
     perror(msg);
 }
 
-int main(int argc,char *argv[])
-{
-    if(argc < 4) {
-        printf("Usage: %s host port clients localip\n", argv[0]);
-        exit(0);
-    }
-
+int run(Options* options) {
     int sockfd = 0;
-    char* host = argv[1];
-    int port = atoi(argv[2]);
-    int clients = atoi(argv[3]);
-    char* localip = argv[4];
     struct hostent *server = NULL;
     struct sockaddr_in serv_addr;
-    char response[4096];
-    const char* message = "hello";
+	
+	int port = options->port;
+	const char* host = options->host;
+	const char* localip = options->localip;
+	int duration = options->duration;
+	int clients = options->clients;
 
-    printf("%s remote=%s port=%d clients=%d localip=%s\n", argv[0], host, port, clients, localip);
+    printf("remote=%s port=%d clients=%d localip=%s\n", host, port, clients, localip);
     server = gethostbyname(host);
     if (server == NULL) error("ERROR, no such host");
 
@@ -67,15 +52,29 @@ int main(int argc,char *argv[])
     for(i = 0; i < clients; i++) {
         sockfd = socks[i];
         if(sockfd) {
-            int ret = send(sockfd, message, strlen(message), 0);
-            ret = recv(sockfd, response, sizeof(response), 0);
+       		if(options->on_connected) {
+       			options->on_connected(i, sockfd);
+       		}
         }
     }
 
-    for(i = 0; i < 10; i++) {
-        printf(".");
-        fflush(stdout);
-        sleep(1);
+	while(duration) {
+		duration--;
+		if(options->on_send_payload == NULL) {
+			printf(".");
+			fflush(stdout);
+			sleep(1);
+		}
+		else{
+			for(i = 0; i < clients; i++) {
+				sockfd = socks[i];
+				if(sockfd) {
+					if(options->on_send_payload) {
+						options->on_send_payload(i, sockfd);
+					}
+				}
+			}
+		}
     }
 
     for(i = 0; i < clients; i++) {
