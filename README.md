@@ -43,8 +43,12 @@ done
 终端：
 
 ```
-ulimit -n 1048576
-sysctl -w fs.file-max=1048576
+sysctl -w fs.file-max=2097152
+sysctl -w fs.nr_open=2097152
+sysctl -w net.core.somaxconn=65536
+
+ulimit -Sn 1048576
+ulimit -Hn 1048576
 ```
 
 5.运行测试
