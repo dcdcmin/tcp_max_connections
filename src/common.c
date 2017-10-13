@@ -1,10 +1,16 @@
-#include "connection_common.h"
+#include "common.h"
 
-void error(const char *msg) {
+static int running = 1;
+static void on_ctrl_c(int signal){
+    running = 0;
+    printf("(%d):quiting...\n", signal);
+}
+
+static void error(const char *msg) {
     perror(msg); exit(0); 
 }
 
-void warnning(const char *msg) { 
+static void warnning(const char *msg) { 
     perror(msg);
 }
 
@@ -19,6 +25,9 @@ int run(Options* options) {
 	int duration = options->duration;
 	int clients = options->clients;
 
+    socketInit();
+    signal(SIGINT, on_ctrl_c);
+
     printf("remote=%s port=%d clients=%d localip=%s\n", host, port, clients, localip);
     server = gethostbyname(host);
     if (server == NULL) error("ERROR, no such host");
@@ -26,15 +35,17 @@ int run(Options* options) {
     int i = 0;
     int* socks = (int*)calloc(clients, sizeof(int));
 
-    for(i = 0; i < clients; i++) {
+    for(i = 0; running && (i < clients); i++) {
         struct sockaddr_in localaddr;
         sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
         if (sockfd < 0) error("ERROR opening socket");
-        localaddr.sin_family = AF_INET;
-        localaddr.sin_addr.s_addr = inet_addr(localip);
-        localaddr.sin_port = 0;  // Any local port will do
-        bind(sockfd, (struct sockaddr *)&localaddr, sizeof(localaddr));
+        if(localip && *localip) {
+            localaddr.sin_family = AF_INET;
+            localaddr.sin_addr.s_addr = inet_addr(localip);
+            localaddr.sin_port = 0;  // Any local port will do
+            bind(sockfd, (struct sockaddr *)&localaddr, sizeof(localaddr));
+        }
 
         memset(&serv_addr,0,sizeof(serv_addr));
         serv_addr.sin_family = AF_INET;
@@ -49,7 +60,7 @@ int run(Options* options) {
         }
     }
 
-    for(i = 0; i < clients; i++) {
+    for(i = 0; running && (i < clients); i++) {
         sockfd = socks[i];
         if(sockfd) {
        		if(options->on_connected) {
@@ -58,15 +69,15 @@ int run(Options* options) {
         }
     }
 
-	while(duration) {
+	while(duration && running) {
 		duration--;
 		if(options->on_send_payload == NULL) {
 			printf(".");
 			fflush(stdout);
-			sleep(1);
+			msleep(1000);
 		}
 		else{
-			for(i = 0; i < clients; i++) {
+			for(i = 0;  running && (i < clients); i++) {
 				sockfd = socks[i];
 				if(sockfd) {
 					if(options->on_send_payload) {
@@ -81,11 +92,63 @@ int run(Options* options) {
         sockfd = socks[i];
         if(sockfd) {
             close(sockfd);
+            printf("%d: close(%d)\n", i, sockfd);
         }
     }
 
     free(socks);
 
-    return 0;
+    socketDeinit();
 
+    return 0;
 }
+
+Options parse_options(int argc, char *argv[]) {
+	Options opts;
+
+    if(argc < 4) {
+        printf("Usage: %s host port clients [localip]\n", argv[0]);
+        exit(0);
+    }
+
+	memset(&opts, 0x00, sizeof(opts));
+
+    opts.host = argv[1];
+    opts.port = atoi(argv[2]);
+    opts.clients = atoi(argv[3]);
+    opts.localip = argv[4];
+    opts.duration = 60;
+
+	return opts;
+}
+
+#ifdef WIN32
+void socketInit() {
+    int iResult;
+    WSADATA wsaData;
+    // Initialize Winsock
+    iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (iResult != 0) {
+        printf("WSAStartup failed: %d\n", iResult);
+    }
+}
+
+void socketDeinit() {
+    WSACleanup();
+}
+
+void msleep(int ms) {
+    Sleep(ms);
+}
+
+#else
+void socketInit() {
+}
+
+void socketDeinit() {
+}
+
+void msleep(int ms) {
+    usleep(ms*1000);
+}
+#endif

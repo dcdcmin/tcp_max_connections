@@ -1,5 +1,6 @@
 all:
-	gcc -g connection_common.c http_connection.c -o http_connection
-	gcc -g http_request.c -o http_request
+	mkdir build; cd build && cmake ../ && make
+
 clean:
-	rm -rf http_request http_connection
+	rm -rf build bin vs2015 vs2012 vs2008
+
