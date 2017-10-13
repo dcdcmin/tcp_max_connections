@@ -14,6 +14,7 @@ static void warnning(const char *msg) {
     perror(msg);
 }
 
+#define START_PORT 1204
 int run(Options* options) {
     int sockfd = 0;
     struct hostent *server = NULL;
@@ -43,8 +44,12 @@ int run(Options* options) {
         if(localip && *localip) {
             localaddr.sin_family = AF_INET;
             localaddr.sin_addr.s_addr = inet_addr(localip);
-            localaddr.sin_port = 0;  // Any local port will do
-            bind(sockfd, (struct sockaddr *)&localaddr, sizeof(localaddr));
+            localaddr.sin_port = htons(START_PORT+i);
+
+            if(bind(sockfd, (struct sockaddr *)&localaddr, sizeof(localaddr)) < 0) {
+                printf("port conflict %d\n", i);
+                continue;
+            }
         }
 
         memset(&serv_addr,0,sizeof(serv_addr));
@@ -54,18 +59,12 @@ int run(Options* options) {
 
         if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) >= 0) {
             socks[i] = sockfd;
-            printf("%d: %d\n", i, sockfd);
-        }else{
-            warnning("ERROR connecting");
-        }
-    }
-
-    for(i = 0; running && (i < clients); i++) {
-        sockfd = socks[i];
-        if(sockfd) {
        		if(options->on_connected) {
        			options->on_connected(i, sockfd);
        		}
+            printf("%d: %d\n", i, sockfd);
+        }else{
+            warnning("ERROR connecting");
         }
     }
 
@@ -117,7 +116,7 @@ Options parse_options(int argc, char *argv[]) {
     opts.port = atoi(argv[2]);
     opts.clients = atoi(argv[3]);
     opts.localip = argv[4];
-    opts.duration = 60;
+    opts.duration = 600;
 
 	return opts;
 }
