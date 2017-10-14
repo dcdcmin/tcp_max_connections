@@ -1,5 +1,5 @@
-
-sysctl -w net.core.somaxconn=65536
+sysctl -w net.nf_conntrack_max=2097152
+sysctl -w net.core.somaxconn=262144
 sysctl -w net.ipv4.tcp_mem='4096 4096 4096'
 sysctl -w net.ipv4.tcp_rmem='4096 4096 4096'
 sysctl -w net.ipv4.tcp_wmem='4096 4096 4096'
