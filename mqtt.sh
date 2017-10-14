@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PORT=9999
-IP_END=20
+IP_END=30
 IP_START=10
 CLIENTS=50000
 TARGET=localhost
