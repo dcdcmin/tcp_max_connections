@@ -1,6 +1,12 @@
+#!/bin/bash
 
-for i in `seq 10 20`; 
+NIC="ens33"
+IP_END=20
+IP_START=10
+IP_PREFIX="192.168.142"
+
+for i in `seq $IP_START $IP_END`; 
 do 
-    echo ifconfig ens33:$i 192.168.142.$i up
-    sudo ifconfig ens33:$i 192.168.142.$i up
+    echo ifconfig ${NIC}:$i ${IP_PREFIX}.$i up
+    ifconfig ${NIC}:$i ${IP_PREFIX}.$i up
 done
