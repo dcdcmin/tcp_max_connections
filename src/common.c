@@ -47,7 +47,7 @@ int run(Options* options) {
             localaddr.sin_port = htons(START_PORT+i);
 
             if(bind(sockfd, (struct sockaddr *)&localaddr, sizeof(localaddr)) < 0) {
-                printf("port conflict %d\n", i);
+                printf("port conflict %d\n", (int)(START_PORT+i));
                 continue;
             }
         }
@@ -62,7 +62,6 @@ int run(Options* options) {
        		if(options->on_connected) {
        			options->on_connected(i, sockfd);
        		}
-            printf("%d: %d\n", i, sockfd);
         }else{
             warnning("ERROR connecting");
         }

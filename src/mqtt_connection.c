@@ -10,12 +10,21 @@ static int requestsNr = 0;
 #define USERNAME "benchmark"
 #define PASSWORD "Mark1Bench2Mq"
 
+const char* s_local_ip = "";
+static char* gen_client_id(char* clientid, int len, const char* prefix, int index) {
+	snprintf(clientid, len, "%s%s.%d", prefix, s_local_ip, index);
+
+    return clientid;
+}
+
 static int send_packet(int index, int sock, const char* desc, unsigned char* message, int len) {
 	char response[4096];
     int wret = send(sock, message, len, 0);
     int rret = recv(sock, response, sizeof(response), 0);
-	
-	printf("(%d)%d %s send(%d):%d recv:%d\n", requestsNr, index, desc, len, wret, rret);
+
+    if(rret <= 0) {
+	    printf("(%d)%d %s send(%d):%d recv:%d\n", requestsNr, index, desc, len, wret, rret);
+    }
 
     return 0;
 }
@@ -24,14 +33,12 @@ static int send_connect_packet(int index, int sock) {
 	unsigned char message[4096];
 	char clientid[64];
 	MQTTPacket_connectData c = MQTTPacket_connectData_initializer;	
-    snprintf(clientid, sizeof(clientid), "c%d", index);
 
     memset(&c, 0x00, sizeof(c));
-
     memcpy(c.struct_id, "MQTT", 4);
     c.struct_version = 0;
     c.MQTTVersion = 4;
-    c.clientID.cstring = clientid;
+    c.clientID.cstring = gen_client_id(clientid, sizeof(clientid), "c", index);
     c.keepAliveInterval = 0xefef;
     c.cleansession = 0;
     c.willFlag = 0;
@@ -53,7 +60,7 @@ static int send_sub_packet(int index, int sock, const char* topic) {
     memset(qoss, 0x00, sizeof(qoss));
     topics[0].cstring = (char*)topic;
 
-    printf("subscribe %s\n", topic);
+    //printf("subscribe %s\n", topic);
     int len = MQTTSerialize_subscribe(message, sizeof(message), 0, packet_id, 1, topics, qoss);
 
     return send_packet(index, sock, "subscribe", message, len);
@@ -62,10 +69,9 @@ static int send_sub_packet(int index, int sock, const char* topic) {
 static int on_connected(int index, int sock) {
 	requestsNr++;
 	char topic[256];
-	snprintf(topic, sizeof(topic), "/%d%d/%d%d", index, (int)time(0), rand(), requestsNr);
 
     send_connect_packet(index, sock);
-    send_sub_packet(index, sock, topic);
+    send_sub_packet(index, sock, gen_client_id(topic, sizeof(topic), "/", index));
     
 	return 0;
 }
@@ -93,9 +99,9 @@ int main(int argc,char *argv[])
 {
 	Options opts = parse_options(argc, argv);
 	opts.on_connected = on_connected;
-	opts.on_send_payload = send_publish_message;
+//	opts.on_send_payload = send_publish_message;
 
-    srand((unsigned int)time(0));
+    s_local_ip = opts.localip ? opts.localip : "";
 
 	run(&opts);
 
