@@ -1,0 +1,3 @@
+[submodule "3rd/mqtt/src"]
+	path = 3rd/mqtt/src
+	url = https://github.com/xianjimli/paho.mqtt.embedded-c.git

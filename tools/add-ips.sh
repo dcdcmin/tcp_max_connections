@@ -1,7 +1,7 @@
 #!/bin/bash
 
 NIC="ens33"
-IP_END=20
+IP_END=30
 IP_START=10
 IP_PREFIX="192.168.142"
 

@@ -35,7 +35,9 @@ endforeach( OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES )
 
 link_directories(${BIN_DIR})
 include_directories(${PROJECT_SOURCE_DIR}/common)
+include_directories(${PROJECT_SOURCE_DIR}/3rd/mqtt/src/MQTTPacket/src)
 
+add_subdirectory(3rd/mqtt)
 add_subdirectory(src)
 
 
